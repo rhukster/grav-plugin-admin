@@ -1,0 +1,73 @@
+<div class="translations-content">
+
+    <h1>Translations</h1>
+
+    {% set lang = uri.param('lang') ? : 'en' %}
+
+    {% if authorize(['admin.translations', 'admin.super']) %}
+        {% set languages = grav.languages %}
+        {% set language = grav.language %}
+
+
+
+        {#{{ dump(languages.flattenByLang(lang)) }}#}
+
+        {% set default_lang = languages.flattenByLang('en') %}
+        {% set selected_lang = lang == 'en' ? default_lang : languages.flattenByLang(lang) %}
+
+        {#{{ dump(languages.unflatten(selected_lang)) }}#}
+
+        <style>
+            tr.missing td {
+                color: red;
+            }
+        </style>
+
+        <p style="padding: 1rem 1.5rem;">
+            Language <strong>{{ lang }}</strong> Selected. Found <strong>{{ selected_lang|length }}</strong> translations out of <strong>{{ default_lang|length }}</strong> total, <strong>{{ default_lang|length - selected_lang|length }}</strong> translations missing...
+
+            <select id="lang-chooser">
+                <option>Languages</option>
+                {% for lang_code in languages.toArray|keys %}
+                    {% set selected = lang == lang_code ? 'selected="selected"' %}
+                    <option value="{{ lang_code }}" {{ selected }}>{{ language.getLanguageCode(lang_code, 'nativeName') }}</option>
+                {% endfor %}
+            </select>
+
+            <script type="text/javascript">
+                $(function(){
+                    $("#lang-chooser").change(function(){
+                        window.location='{{ uri.url }}/lang:' + this.value
+                    });
+                });
+            </script>
+        </p>
+
+        <table class="noflex">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th>Translated</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for key,value in default_lang %}
+                {% set override = attribute(selected_lang, key) %}
+                <tr class="{{ override ? "normal" : "missing" }}">
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        {{ key }}
+                    </td>
+                    <td>{{ override ?: value }}</td>
+                    <td>{{ override ? "translated" : "missing" }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        {% include 'partials/modal-changes-detected.html.twig' %}
+    {% endif %}
+
+</div>
